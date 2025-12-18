@@ -1,6 +1,4 @@
-// components/ChatUI.tsx
 "use client";
-
 import { useEffect, useRef, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import AuthPopup from "./AuthPopup";
@@ -104,16 +102,18 @@ export default function ChatUI() {
       setMessages((prevMessages) => {
         const chatId = msg.chatId;
         const existingMessages = prevMessages[chatId] || [];
-
         const isDuplicate = existingMessages.some(
           (message) => message.id === msg.id
         );
 
         if (isDuplicate) return prevMessages;
 
-        const updatedMessages = [
+        const updatedMessages: Message[] = [
           ...existingMessages,
-          { ...msg, status: "sent" },
+          {
+            ...msg,
+            status: "sent" as MessageStatus,
+          },
         ].sort((a, b) => a.ts - b.ts);
 
         return {
@@ -127,15 +127,15 @@ export default function ChatUI() {
 
       if (isFromAnotherChat && isFromAnotherUser) {
         setChats((prevChats) =>
-          prevChats.map((chat) => {
-            if (chat.id !== msg.chatId) return chat;
-
-            return {
-              ...chat,
-              unreadCount: chat.unreadCount + 1,
-              lastMessage: msg,
-            };
-          })
+          prevChats.map((chat) =>
+            chat.id !== msg.chatId
+              ? chat
+              : {
+                  ...chat,
+                  unreadCount: chat.unreadCount + 1,
+                  lastMessage: msg,
+                }
+          )
         );
       }
     });
@@ -171,7 +171,9 @@ export default function ChatUI() {
       ({ chatId, userName }: { chatId: string; userName: string }) => {
         setTypers((prev) => ({
           ...prev,
-          [chatId]: (prev[chatId] || []).filter((userTyping) => userTyping !== userName),
+          [chatId]: (prev[chatId] || []).filter(
+            (userTyping) => userTyping !== userName
+          ),
         }));
       }
     );
@@ -196,7 +198,7 @@ export default function ChatUI() {
     if (!activeChat || !text.trim()) return;
 
     if (!text.trim()) {
-      socket.current?.emit("stopTyping", userName);
+      socket.current?.emit("stopTyping", user?.name);
       return;
     }
 
